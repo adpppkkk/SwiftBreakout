@@ -97,7 +97,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     ball.physicsBody!.contactTestBitMask = BottomCategory | BlockCategory | BorderCategory | PaddleCategory
     
     // 1.
-    let numberOfBlocks = 6
+    let numberOfBlocks = 8
     let blockWidth = SKSpriteNode(imageNamed: "block").size.width
     let totalBlocksWidth = blockWidth * CGFloat(numberOfBlocks)
     // 2.
