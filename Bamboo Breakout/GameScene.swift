@@ -28,6 +28,7 @@ import GameplayKit
 
 let BallCategoryName = "ball"
 let PaddleCategoryName = "paddle"
+let Paddle2CategoryName = "paddle2"
 let BlockCategoryName = "block"
 let GameMessageName = "gameMessage"
 
@@ -35,11 +36,13 @@ let BallCategory   : UInt32 = 0x1 << 0
 let BottomCategory : UInt32 = 0x1 << 1
 let BlockCategory  : UInt32 = 0x1 << 2
 let PaddleCategory : UInt32 = 0x1 << 3
+let Paddle2Category : UInt32 = 0x1 << 3
 let BorderCategory : UInt32 = 0x1 << 4
 
 class GameScene: SKScene, SKPhysicsContactDelegate {
   
   var isFingerOnPaddle = false
+  var isFingerOnPaddle2 = false
   
   lazy var gameState: GKStateMachine = GKStateMachine(states: [
     WaitingForTap(scene: self),
@@ -88,16 +91,18 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     addChild(bottom)
     
     let paddle = childNode(withName: PaddleCategoryName) as! SKSpriteNode
+    let paddle2 = childNode(withName: Paddle2CategoryName) as! SKSpriteNode
     
     bottom.physicsBody!.categoryBitMask = BottomCategory
     ball.physicsBody!.categoryBitMask = BallCategory
     paddle.physicsBody!.categoryBitMask = PaddleCategory
+    paddle2.physicsBody!.categoryBitMask = Paddle2Category
     borderBody.categoryBitMask = BorderCategory
     
-    ball.physicsBody!.contactTestBitMask = BottomCategory | BlockCategory | BorderCategory | PaddleCategory
+    ball.physicsBody!.contactTestBitMask = BottomCategory | BlockCategory | BorderCategory | PaddleCategory | Paddle2Category
     
     // 1.
-    let numberOfBlocks = 8
+    let numberOfBlocks = 12
     let blockWidth = SKSpriteNode(imageNamed: "block").size.width
     let totalBlocksWidth = blockWidth * CGFloat(numberOfBlocks)
     // 2.
@@ -106,7 +111,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     for i in 0..<numberOfBlocks {
       let block = SKSpriteNode(imageNamed: "block.png")
       block.position = CGPoint(x: xOffset + CGFloat(CGFloat(i) + 0.5) * blockWidth,
-                               y: frame.height * 0.8)
+                               y: frame.height * 0.9)
       
       block.physicsBody = SKPhysicsBody(rectangleOf: block.frame.size)
       block.physicsBody!.allowsRotation = false
@@ -143,6 +148,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     case is WaitingForTap:
       gameState.enter(Playing.self)
       isFingerOnPaddle = true
+      isFingerOnPaddle2 = true
       
     case is Playing:
       let touch = touches.first
@@ -151,6 +157,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
       if let body = physicsWorld.body(at: touchLocation) {
         if body.node!.name == PaddleCategoryName {
           isFingerOnPaddle = true
+        }
+        if body.node!.name == Paddle2CategoryName {
+          isFingerOnPaddle2 = true
         }
       }
       
@@ -182,10 +191,27 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
       // 6.
       paddle.position = CGPoint(x: paddleX, y: paddle.position.y)
     }
+    
+    if isFingerOnPaddle2 {
+      // 2.
+      let touch = touches.first
+      let touchLocation = touch!.location(in: self)
+      let previousLocation = touch!.previousLocation(in: self)
+      // 3.
+      let paddle2 = childNode(withName: Paddle2CategoryName) as! SKSpriteNode
+      // 4.
+      var paddle2X = paddle2.position.x + (touchLocation.x - previousLocation.x)
+      // 5.
+      paddle2X = max(paddle2X, paddle2.size.width/2)
+      paddle2X = min(paddle2X, size.width - paddle2.size.width/2)
+      // 6.
+      paddle2.position = CGPoint(x: paddle2X, y: paddle2.position.y)
+    }
   }
   
   override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
     isFingerOnPaddle = false
+    isFingerOnPaddle2 = false
   }
   
   override func update(_ currentTime: TimeInterval) {
